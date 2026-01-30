@@ -1,10 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>College Bus Tracker</title>
+
+  <!-- Leaflet CSS -->
+  <link
+          rel="stylesheet"
+          href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-$END$
+
+<!-- ===== Top Navigation Bar ===== -->
+<header class="top-bar">
+  <div class="menu">
+    ☰
+    <div class="dropdown">
+      <a href="driver.html">Captain Login</a>
+      <a href="admin.html">Admin Login</a>
+    </div>
+  </div>
+
+  <div class="title">
+    🚌 College Bus Tracker
+  </div>
+
+  <div class="bus-selector">
+    <label for="busSelect"></label><select id="busSelect">
+    <option value="">Select Bus</option>
+    <!-- Filled dynamically -->
+  </select>
+  </div>
+</header>
+
+<!-- ===== Map Container ===== -->
+<div id="map"></div>
+
+<!-- ===== Footer ===== -->
+<footer class="footer">
+  Live bus tracking • <span id="connectionStatus">Connecting...</span>
+</footer>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- WebSocket Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+<!-- Student Logic -->
+<script src="js/student.js"></script>
+
 </body>
 </html>

@@ -1,10 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Captain Console | Bus Tracker</title>
+
+    <link rel="stylesheet" href="css/driver.css">
 </head>
 <body>
-$END$
+
+<header class="top-bar">
+    <h1>🧢 Captain Console</h1>
+</header>
+
+<main>
+
+    <!-- LOGIN -->
+    <section id="loginSection" class="card">
+        <h2>Captain Login</h2>
+        <input type="text" id="phone" placeholder="Phone Number">
+        <button id="loginBtn">Login</button>
+    </section>
+
+    <!-- BUS SELECTION -->
+    <section id="busSection" class="card hidden">
+        <h3>Select Available Bus</h3>
+        <select id="busSelect"></select>
+        <button id="startBtn">Start Tracking</button>
+    </section>
+
+    <!-- STATUS -->
+    <section id="statusSection" class="card hidden">
+        <h3>Live Location</h3>
+        <p id="statusText">Connecting...</p>
+        <button id="stopBtn" class="danger">Stop Tracking</button>
+    </section>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+<script src="js/driver.js"></script>
 </body>
 </html>

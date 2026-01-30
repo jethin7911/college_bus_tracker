@@ -1,10 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard | Bus Tracker</title>
+
+    <link rel="stylesheet" href="css/admin.css">
 </head>
 <body>
-$END$
+
+<header class="top-bar">
+    <h1>🛠 Admin Dashboard</h1>
+    <button id="logoutBtn">Logout</button>
+</header>
+
+<main>
+
+    <!-- LOGIN -->
+    <section id="loginSection" class="card">
+        <h2>Admin Login</h2>
+
+        <input type="text" id="username" placeholder="Username">
+        <input type="password" id="password" placeholder="Password">
+
+        <button id="loginBtn">Login</button>
+
+        <p class="hint">Super Admin: <b>superadmin / admin123</b></p>
+    </section>
+
+    <!-- DASHBOARD -->
+    <section id="dashboardSection" class="hidden">
+
+        <div class="card">
+            <h3>Add Bus</h3>
+            <input type="text" id="busNumber" placeholder="Bus Number">
+            <input type="text" id="routeName" placeholder="Route Name">
+            <button id="addBusBtn">Add Bus</button>
+        </div>
+
+        <div class="card">
+            <h3>Add Captain</h3>
+            <input type="text" id="driverName" placeholder="Captain Name">
+            <input type="text" id="driverPhone" placeholder="Phone Number">
+            <button id="addDriverBtn">Add Captain</button>
+        </div>
+
+    </section>
+
+</main>
+
+<script src="js/admin.js"></script>
 </body>
 </html>
