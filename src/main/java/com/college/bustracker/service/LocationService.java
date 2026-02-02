@@ -70,7 +70,6 @@ public class LocationService {
                 LocalDateTime.now()
         ));
 
-
         // Optionally save to DB (can be done async or scheduled)
         // For now, we'll save every update
         Location location = new Location();
@@ -176,7 +175,6 @@ public class LocationService {
     }
 
     // Add this method to your LocationService class
-
     public LocationBroadcastDTO updateLocationAndGetBroadcast(LocationDTO locationDTO) {
         Optional<Assignment> assignmentOpt = assignmentRepository.findById(locationDTO.getAssignmentId());
 
@@ -216,5 +214,4 @@ public class LocationService {
                 LocalDateTime.now()
         );
     }
-
 }

@@ -5,6 +5,7 @@ import com.college.bustracker.service.AdminService;
 import com.college.bustracker.service.BusService;
 import com.college.bustracker.service.DriverService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,6 +29,12 @@ public class AdminController {
     @PostMapping("/login")
     public ResponseEntity<AdminLoginResponseDTO> login(@RequestBody AdminLoginRequestDTO request) {
         AdminLoginResponseDTO response = adminService.login(request);
+
+        if (!"Login successful".equals(response.getMessage())) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(response);
+        }
         return ResponseEntity.ok(response);
     }
 

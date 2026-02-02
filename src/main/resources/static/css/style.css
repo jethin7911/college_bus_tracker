@@ -73,10 +73,10 @@ body {
 }
 
 /* Show dropdown on hover */
-.menu:hover .dropdown {
+.menu:hover .dropdown,
+.dropdown:hover {
     display: block;
 }
-
 /* Title */
 .title {
     flex: 1;

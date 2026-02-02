@@ -3,7 +3,9 @@
 ================================ */
 //const API_BASE = "https://192.168.137.1:8080/api/admin";
 
-const API_BASE = "fluently-unhectored-cedric.ngrok-free.dev/api/admin"
+
+const API_BASE = `${location.origin}/api/admin`;
+
 let loggedInAdminId = null;
 
 /* ================================

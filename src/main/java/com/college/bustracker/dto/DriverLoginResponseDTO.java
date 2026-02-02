@@ -8,12 +8,21 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DriverLoginResponseDTO {
+
     private Long driverId;
-    private String phoneNumber;
-    private String name;
-    private boolean authorized;
+    private boolean success;
     private String message;
 
-    public void setSuccess(boolean b) {
+    // getters & setters
+
+    public void setDriverId(Long driverId) {
+        this.driverId = driverId;
+    }
+
+    public void setSuccess(boolean success) {
+        this.success = success;
+    }
+    public void setMessage(String message) {
+        this.message = message;
     }
 }

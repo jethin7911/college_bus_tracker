@@ -4,8 +4,10 @@ import com.college.bustracker.dto.*;
 import com.college.bustracker.service.AssignmentService;
 import com.college.bustracker.service.BusService;
 import com.college.bustracker.service.DriverService;
+import com.college.bustracker.service.LocationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,7 +15,14 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/driver")
 @CrossOrigin(origins = "*")
+
 public class DriverController {
+
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
+
+    @Autowired
+    private LocationService locationService;
 
     @Autowired
     private DriverService driverService;
@@ -48,4 +57,22 @@ public class DriverController {
     public ResponseEntity<ApiResponseDTO> stopTracking(@RequestParam Long assignmentId) {
         return ResponseEntity.ok(assignmentService.stopTracking(assignmentId));
     }
+    // This allows the mobile app to send location updates via HTTP POST
+    // instead of requiring WebSocket connection
+    @PostMapping("/update-location")
+    public ResponseEntity<Void> updateLocation(@RequestBody LocationDTO locationDTO) {
+        if (locationDTO.getTimestamp() == null) {
+            locationDTO.setTimestamp(java.time.LocalDateTime.now());
+        }
+        LocationBroadcastDTO broadcast =
+                locationService.updateLocationAndGetBroadcast(locationDTO);
+        if (broadcast != null) {
+            messagingTemplate.convertAndSend(
+                    "/topic/bus-location",
+                    broadcast
+            );
+        }
+        return ResponseEntity.ok().build();
+    }
+
 }

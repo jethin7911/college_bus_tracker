@@ -1,8 +1,6 @@
 /* ================================
    Configuration
 ================================ */
-//const API_BASE_URL = "https://192.168.137.1:8080";
-//const WS_URL = "https://192.168.137.1:8080/ws";
 
 // REST API base (http / https only)
 const API_BASE = `${location.origin}/api`;
@@ -10,24 +8,20 @@ const API_BASE = `${location.origin}/api`;
 // WebSocket base (ws / wss automatically)
 const WS_URL = `${location.origin}/ws`;
 
-
-
 let map;
 let busMarker = null;
 let selectedBusId = null;
 let stompClient = null;
 let isConnected = false;
-
 /* ================================
    Initialize Map
 ================================ */
 function initMap() {
-    map = L.map("map").setView([11.3182, 75.9376], 15); // Default: Kozhikode
+    map = L.map("map").setView([11.3182, 75.9376], 15); // Default: NitC
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "© OpenStreetMap contributors"
     }).addTo(map);
 }
-
 /* ================================
    Load Buses for Dropdown
 ================================ */
@@ -50,7 +44,6 @@ async function loadBuses() {
         alert("Unable to load buses. Please try again later.");
     }
 }
-
 /* ================================
    WebSocket Connection
 ================================ */
@@ -69,7 +62,7 @@ function connectWebSocket() {
             console.log("WebSocket connected successfully");
 
             // Subscribe to location updates
-            stompClient.subscribe("/topic/location-updates", (message) => {
+            stompClient.subscribe("/topic/bus-location", (message) => {
                 const locationData = JSON.parse(message.body);
                 handleLocationUpdate(locationData);
             });
@@ -95,7 +88,7 @@ function handleLocationUpdate(locationData) {
 
     // Only update if this is for the selected bus
     if (!selectedBusId || locationData.busId !== parseInt(selectedBusId)) {
-        return; // Not the bus we're tracking
+        return;
     }
 
     // Update marker with new location
@@ -128,7 +121,6 @@ function onBusSelect() {
         await fetchInitialLocation();
     });
 }
-
 /* ================================
    Fetch Initial Bus Location (HTTP)
 ================================ */
@@ -192,7 +184,6 @@ function updateBusMarker(lat, lng) {
 
     console.log(`Bus marker updated: [${lat}, ${lng}]`);
 }
-
 /* ================================
    Update Connection Status
 ================================ */
@@ -202,7 +193,6 @@ function updateConnectionStatus(message) {
         statusElement.textContent = message;
     }
 }
-
 /* ================================
    Init on Page Load
 ================================ */

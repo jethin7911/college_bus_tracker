@@ -14,11 +14,4 @@ public class LocationDTO {
     private Double latitude;
     private Double longitude;
     private LocalDateTime timestamp;
-
-    public LocationDTO(Long assignmentId, Double latitude, Double longitude) {
-        this.assignmentId = assignmentId;
-        this.latitude = latitude;
-        this.longitude = longitude;
-        this.timestamp = LocalDateTime.now();
-    }
 }

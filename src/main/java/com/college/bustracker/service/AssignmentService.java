@@ -30,7 +30,7 @@ public class AssignmentService {
     @Autowired
     private LocationService locationService;
 
-    // Start tracking (driver selects bus)
+    // ✅ FIX: Start tracking with force-stop capability
     public ApiResponseDTO startTracking(BusSelectionDTO request) {
 
         // Check if driver exists
@@ -45,10 +45,23 @@ public class AssignmentService {
             return new ApiResponseDTO(false, "Bus not found");
         }
 
-        // Check if driver already has active assignment
+        // ✅ FIX: Check if driver already has active assignment
         Optional<Assignment> driverActive = assignmentRepository.findByDriverIdAndIsActiveTrue(request.getDriverId());
         if (driverActive.isPresent()) {
-            return new ApiResponseDTO(false, "You are already tracking another bus. Stop it first.");
+            // ✅ FIX: If forceStart is enabled, auto-stop the previous assignment
+            if (request.getForceStart() != null && request.getForceStart()) {
+                Assignment previousAssignment = driverActive.get();
+                previousAssignment.setIsActive(false);
+                previousAssignment.setEndedAt(LocalDateTime.now());
+                assignmentRepository.save(previousAssignment);
+
+                // ✅ FIX: Clear location from RAM
+                locationService.removeLocation(previousAssignment.getBus().getId());
+
+                System.out.println("Force-stopped previous assignment: " + previousAssignment.getId());
+            } else {
+                return new ApiResponseDTO(false, "You are already tracking another bus. Stop it first.");
+            }
         }
 
         // Check if bus is already being tracked
@@ -71,7 +84,7 @@ public class AssignmentService {
         return new ApiResponseDTO(true, "Tracking started", saved.getId());
     }
 
-    // Stop tracking
+    // ✅ FIX: Stop tracking with location cleanup
     public ApiResponseDTO stopTracking(Long assignmentId) {
         Optional<Assignment> assignmentOpt = assignmentRepository.findById(assignmentId);
 
@@ -80,6 +93,10 @@ public class AssignmentService {
         }
 
         Assignment assignment = assignmentOpt.get();
+
+        // ✅ FIX: Clear location from RAM BEFORE updating database
+        locationService.removeLocation(assignment.getBus().getId());
+
         assignment.setIsActive(false);
         assignment.setEndedAt(LocalDateTime.now());
 

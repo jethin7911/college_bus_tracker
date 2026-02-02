@@ -22,7 +22,7 @@ public class DriverService {
         Optional<Driver> driverOpt =
                 driverRepository.findByPhoneNumber(request.getPhoneNumber());
 
-        // ❌ Not added by admin → reject
+        //  Not added by admin → reject
         if (driverOpt.isEmpty()) {
             DriverLoginResponseDTO response = new DriverLoginResponseDTO();
             response.setSuccess(false);
@@ -30,13 +30,13 @@ public class DriverService {
             return response;
         }
 
-        // ✅ Authorized driver
+        // Authorized driver
         Driver driver = driverOpt.get();
 
         DriverLoginResponseDTO response = new DriverLoginResponseDTO();
         response.setDriverId(driver.getId());
-        response.setPhoneNumber(driver.getPhoneNumber());
-        response.setName(driver.getName());
+        //response.setPhoneNumber(driver.getPhoneNumber());
+        //response.setName(driver.getName());
         response.setSuccess(true);
         response.setMessage("Login successful");
 
