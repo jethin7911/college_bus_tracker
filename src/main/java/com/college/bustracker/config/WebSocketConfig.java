@@ -23,7 +23,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // WebSocket endpoint that drivers will connect to
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("https://nitcbus.vercel.app")
+                .setAllowedOriginPatterns(
+                        "https://nitcbus.vercel.app",
+                        "https://collegebustracker-production.up.railway.app"
+                )
                 .withSockJS();
 
     }
