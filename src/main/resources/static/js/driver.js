@@ -88,7 +88,7 @@ document.getElementById("loginBtn").addEventListener("click", async () => {
 ================================ */
 async function loadAvailableBuses() {
 
-    const res = await fetch(`${API_BASE}/buses/available`);
+    const res = await fetch(`${API_BASE}/api/buses`);
     const buses = await res.json();
 
     busSelect.innerHTML = `<option value="">Select Bus</option>`;
