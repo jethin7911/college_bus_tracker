@@ -30,7 +30,7 @@ public class LocationController {
     }
 
     // REST endpoint - Students get current bus location
-    @GetMapping("/api/bus/{busId}/location")
+    @GetMapping("/bus/{busId}/location")
     @ResponseBody
     public ResponseEntity<BusLocationResponseDTO> getCurrentLocation(@PathVariable Long busId) {
         BusLocationResponseDTO response = locationService.getCurrentLocation(busId);
@@ -38,7 +38,7 @@ public class LocationController {
     }
 
     // Get all active bus locations
-    @GetMapping("/api/buses/locations")
+    @GetMapping("/buses/locations")
     @ResponseBody
     public ResponseEntity<List<BusLocationResponseDTO>> getAllBusLocations() {
         return ResponseEntity.ok(locationService.getAllBusLocations());

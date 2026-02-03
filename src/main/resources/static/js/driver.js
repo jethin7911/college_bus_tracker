@@ -1,8 +1,7 @@
 /* ================================
    CONFIG-MOBILE TESTING VERSION
 ================================ */
-//const SERVER_IP = "192.168.137.1";  // ← CHANGE THIS!
-//const SERVER_PORT = "8080";
+
 
 //const API_BASE = `https://${SERVER_IP}:${SERVER_PORT}/api/driver`;
 //const WS_URL = `https://${SERVER_IP}:${SERVER_PORT}/ws`;
@@ -12,7 +11,7 @@
 const API_BASE = "https://collegebustracker-production.up.railway.app";
 
 // Then use it like:
-fetch(`${API_BASE}/api/buses/locations`)
+fetch(`${API_BASE}/buses/locations`)
 // WebSocket:
 //const WS_URL = new WebSocket(`wss://collegebustracker-production.up.railway.app/ws`);
 // Or if using SockJS (which you are, based on WebSocketConfig):
@@ -49,7 +48,7 @@ document.getElementById("loginBtn").addEventListener("click", async () => {
     }
 
     try {
-        const res = await fetch(`${API_BASE}/login`, {
+        const res = await fetch(`${API_BASE}/driver/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ phoneNumber })
@@ -114,7 +113,7 @@ document.getElementById("startBtn").addEventListener("click", async () => {
     }
 
     try {
-        const res = await fetch(`${API_BASE}/start-tracking`, {
+        const res = await fetch(`${API_BASE}/driver/start-tracking`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

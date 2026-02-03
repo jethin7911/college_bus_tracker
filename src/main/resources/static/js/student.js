@@ -1,13 +1,16 @@
+
 /* ================================
-   Configuration
+   DYNAMIC API CONFIGURATION
 ================================ */
 
-// REST API base (http / https only)
-// At the very top of student.js, driver.js, admin.js
-const API_BASE = "https://collegebustracker-production.up.railway.app";
+const API_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+    ? "https://fluently-unhectored-cedric.ngrok-free.dev" // Use for local development/testing
+    : "https://collegebustracker-production.up.railway.app"; // Use for production (Vercel)
+
+
 
 // Then use it like:
-fetch(`${API_BASE}/api/buses/locations`)
+fetch(`${API_BASE}/buses/locations`)
 // WebSocket:
 //const WS_URL = new WebSocket(`wss://collegebustracker-production.up.railway.app/ws`);
 // Or if using SockJS (which you are, based on WebSocketConfig):
@@ -32,7 +35,7 @@ function initMap() {
 ================================ */
 async function loadBuses() {
     try {
-        const response = await fetch(`${API_BASE}/buses`);
+        const response = await fetch(`${API_BASE}/api/buses`);
         const buses = await response.json();
 
         const busSelect = document.getElementById("busSelect");

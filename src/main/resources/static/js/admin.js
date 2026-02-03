@@ -2,10 +2,13 @@
    CONFIG
 ================================ */
 
-const API_BASE = "https://collegebustracker-production.up.railway.app";
+const API_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+    ? "https://fluently-unhectored-cedric.ngrok-free.dev" // Use for local development/testing
+    : "https://collegebustracker-production.up.railway.app"; // Use for production (Vercel)
+
 
 // Then use it like:
-fetch(`${API_BASE}/api/buses/locations`)
+fetch(`${API_BASE}/buses/locations`)
 
 let loggedInAdminId = null;
 
@@ -34,7 +37,7 @@ loginBtn.addEventListener("click", async () => {
     }
 
     try {
-        const res = await fetch(`${API_BASE}/login`, {
+        const res = await fetch(`${API_BASE}/api/admin/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username, password })
@@ -48,8 +51,8 @@ loginBtn.addEventListener("click", async () => {
         loginSection.style.display = "none";
         dashboardSection.classList.remove("hidden");
 
-        loadBuses();
-        loadDrivers();
+        await loadBuses();
+        await loadDrivers();
 
     } catch (err) {
         alert("Login failed");
@@ -80,7 +83,7 @@ document.getElementById("addBusBtn").addEventListener("click", async () => {
     // Backend expects: busName (not busNumber and routeName separately)
     const busName = routeName ? `${busNumber} - ${routeName}` : busNumber;
 
-    await fetch(`${API_BASE}/buses`, {
+    await fetch(`${API_BASE}/api/admin/buses`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ busName })  // FIXED: Changed from busNumber, routeName
@@ -106,7 +109,7 @@ document.getElementById("addDriverBtn").addEventListener("click", async () => {
         return;
     }
 
-    await fetch(`${API_BASE}/drivers`, {
+    await fetch(`${API_BASE}/api/admin/drivers`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, phoneNumber })
@@ -124,7 +127,7 @@ document.getElementById("addDriverBtn").addEventListener("click", async () => {
    LOAD BUSES
 ================================ */
 async function loadBuses() {
-    const res = await fetch(`${API_BASE}/buses`);
+    const res = await fetch(`${API_BASE}/api/admin/buses`);
     const buses = await res.json();
 
     const busSelect = document.getElementById("busSelect");
@@ -142,7 +145,7 @@ async function loadBuses() {
    LOAD DRIVERS
 ================================ */
 async function loadDrivers() {
-    const res = await fetch(`${API_BASE}/drivers`);
+    const res = await fetch(`${API_BASE}/api/admin/drivers`);
     const drivers = await res.json();
 
     const driverSelect = document.getElementById("driverSelect");
