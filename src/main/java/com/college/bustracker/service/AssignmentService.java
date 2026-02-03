@@ -9,6 +9,7 @@ import com.college.bustracker.repository.BusRepository;
 import com.college.bustracker.repository.DriverRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class AssignmentService {
 
     @Autowired
@@ -58,7 +60,7 @@ public class AssignmentService {
                 // ✅ FIX: Clear location from RAM
                 locationService.removeLocation(previousAssignment.getBus().getId());
 
-                System.out.println("Force-stopped previous assignment: " + previousAssignment.getId());
+                System.out.println("✅ Force-stopped previous assignment: " + previousAssignment.getId());
             } else {
                 return new ApiResponseDTO(false, "You are already tracking another bus. Stop it first.");
             }
@@ -78,6 +80,7 @@ public class AssignmentService {
         assignment.setIsActive(true);
 
         Assignment saved = assignmentRepository.save(assignment);
+        System.out.println("✅ Assignment saved with ID: " + saved.getId()); // Debug log
 
         locationService.seedAssignment(saved);
 
@@ -101,6 +104,7 @@ public class AssignmentService {
         assignment.setEndedAt(LocalDateTime.now());
 
         assignmentRepository.save(assignment);
+        System.out.println("✅ Assignment stopped with ID: " + assignmentId); // Debug log
 
         return new ApiResponseDTO(true, "Tracking stopped");
     }

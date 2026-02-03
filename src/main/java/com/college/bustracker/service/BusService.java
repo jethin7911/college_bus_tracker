@@ -7,11 +7,13 @@ import com.college.bustracker.repository.AssignmentRepository;
 import com.college.bustracker.repository.BusRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class BusService {
 
     @Autowired
@@ -47,6 +49,7 @@ public class BusService {
         bus.setBusName(busDTO.getBusName());
 
         Bus saved = busRepository.save(bus);
+        System.out.println("✅ Bus saved with ID: " + saved.getId()); // Debug log
         return new ApiResponseDTO(true, "Bus added successfully", saved.getId());
     }
 
@@ -62,6 +65,7 @@ public class BusService {
         }
 
         busRepository.deleteById(busId);
+        System.out.println("✅ Bus deleted with ID: " + busId); // Debug log
         return new ApiResponseDTO(true, "Bus deleted successfully");
     }
 }

@@ -5,12 +5,14 @@ import com.college.bustracker.entity.Driver;
 import com.college.bustracker.repository.DriverRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class DriverService {
 
     @Autowired
@@ -66,6 +68,7 @@ public class DriverService {
         driver.setName(driverDTO.getName());
 
         Driver saved = driverRepository.save(driver);
+        System.out.println("✅ Driver saved with ID: " + saved.getId()); // Debug log
         return new ApiResponseDTO(true, "Driver added successfully", saved.getId());
     }
 
@@ -77,6 +80,7 @@ public class DriverService {
         }
 
         driverRepository.deleteById(driverId);
+        System.out.println("✅ Driver deleted with ID: " + driverId); // Debug log
         return new ApiResponseDTO(true, "Driver deleted successfully");
     }
 }

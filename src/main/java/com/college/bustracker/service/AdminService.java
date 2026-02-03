@@ -6,12 +6,14 @@ import com.college.bustracker.repository.AdminRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class AdminService {
 
     @Autowired
@@ -70,6 +72,7 @@ public class AdminService {
         }
 
         Admin saved = adminRepository.save(admin);
+        System.out.println("✅ Admin saved with ID: " + saved.getId()); // Debug log
         return new ApiResponseDTO(true, "Admin added successfully", saved.getId());
     }
 
@@ -84,6 +87,7 @@ public class AdminService {
         }
 
         adminRepository.deleteById(adminId);
+        System.out.println("✅ Admin deleted with ID: " + adminId); // Debug log
         return new ApiResponseDTO(true, "Admin deleted successfully");
     }
 }
