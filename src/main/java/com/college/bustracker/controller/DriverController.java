@@ -57,22 +57,5 @@ public class DriverController {
     public ResponseEntity<ApiResponseDTO> stopTracking(@RequestParam Long assignmentId) {
         return ResponseEntity.ok(assignmentService.stopTracking(assignmentId));
     }
-    // This allows the mobile app to send location updates via HTTP POST
-    // instead of requiring WebSocket connection
-    @PostMapping("/update-location")
-    public ResponseEntity<Void> updateLocation(@RequestBody LocationDTO locationDTO) {
-        if (locationDTO.getTimestamp() == null) {
-            locationDTO.setTimestamp(java.time.LocalDateTime.now());
-        }
-        LocationBroadcastDTO broadcast =
-                locationService.updateLocationAndGetBroadcast(locationDTO);
-        if (broadcast != null) {
-            messagingTemplate.convertAndSend(
-                    "/topic/bus-location",
-                    broadcast
-            );
-        }
-        return ResponseEntity.ok().build();
-    }
 
 }

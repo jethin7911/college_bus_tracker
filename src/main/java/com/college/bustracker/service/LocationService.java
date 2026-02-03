@@ -15,6 +15,8 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 @Service
 public class LocationService {
@@ -25,10 +27,17 @@ public class LocationService {
     @Autowired
     private AssignmentRepository assignmentRepository;
 
-    // In-memory storage: busId -> current location
+    // ─── In-memory: latest location per bus (tiny, max 6 entries) ────────────
     private final Map<Long, CurrentLocation> activeLocations = new ConcurrentHashMap<>();
 
-    // Inner class to store current location
+    // ─── Buffer: collects Location entities between DB flushes ───────────────
+    //     CopyOnWriteArrayList is thread-safe for concurrent add + swap
+    private volatile List<Location> pendingLocations = new CopyOnWriteArrayList<>();
+
+    // ─── Cache: assignmentId -> Assignment, avoids re-fetching from DB ───────
+    private final Map<Long, Assignment> assignmentCache = new ConcurrentHashMap<>();
+
+    // ─── Inner class ─────────────────────────────────────────────────────────
     private static class CurrentLocation {
         Long busId;
         String busName;
@@ -48,118 +57,134 @@ public class LocationService {
         }
     }
 
+    // ─── WebSocket handler calls this. Updates RAM + buffer, does NOT hit DB ─
+    public LocationBroadcastDTO updateLocationAndGetBroadcast(LocationDTO locationDTO) {
 
-    // Update location (called from WebSocket)
-    public void updateLocation(LocationDTO locationDTO) {
-        Optional<Assignment> assignmentOpt = assignmentRepository.findById(locationDTO.getAssignmentId());
-
-        if (assignmentOpt.isEmpty() || !assignmentOpt.get().getIsActive()) {
-            return; // Invalid or inactive assignment
+        // Try cache first, fall back to DB only on cache miss
+        Assignment assignment = assignmentCache.get(locationDTO.getAssignmentId());
+        if (assignment == null) {
+            Optional<Assignment> opt = assignmentRepository.findById(locationDTO.getAssignmentId());
+            if (opt.isEmpty() || !opt.get().getIsActive()) {
+                return null;
+            }
+            assignment = opt.get();
+            assignmentCache.put(assignment.getId(), assignment);
         }
 
-        Assignment assignment = assignmentOpt.get();
-        Long busId = assignment.getBus().getId();
+        // If assignment was deactivated since we cached it, skip
+        if (!assignment.getIsActive()) {
+            assignmentCache.remove(assignment.getId());
+            return null;
+        }
 
-        // Update in-memory (RAM) - FAST
+        Long busId = assignment.getBus().getId();
+        String busName = assignment.getBus().getBusName();
+        LocalDateTime now = LocalDateTime.now();
+
+        // 1. Update in-memory map (instant, students read from here)
         activeLocations.put(busId, new CurrentLocation(
-                busId,
-                assignment.getBus().getBusName(),
-                assignment.getId(),
-                locationDTO.getLatitude(),
-                locationDTO.getLongitude(),
-                LocalDateTime.now()
+                busId, busName, assignment.getId(),
+                locationDTO.getLatitude(), locationDTO.getLongitude(), now
         ));
 
-        // Optionally save to DB (can be done async or scheduled)
-        // For now, we'll save every update
+        // 2. Add to pending buffer (will be flushed to DB by the scheduled task)
         Location location = new Location();
         location.setAssignment(assignment);
         location.setLatitude(locationDTO.getLatitude());
         location.setLongitude(locationDTO.getLongitude());
-        location.setTimestamp(LocalDateTime.now());
+        location.setTimestamp(now);
+        pendingLocations.add(location);
 
-        locationRepository.save(location);
+        // 3. Return broadcast DTO (WebSocket pushes this to all students)
+        return new LocationBroadcastDTO(
+                busId, assignment.getId(), busName,
+                locationDTO.getLatitude(), locationDTO.getLongitude(), now
+        );
     }
 
-    // Get current location for a bus (for students)
+    // ─── Flush buffer to DB every 30 seconds ─────────────────────────────────
+    @Scheduled(fixedRate = 30000) // 30 seconds
+    public void flushPendingLocations() {
+        if (pendingLocations.isEmpty()) return;
+
+        // Atomic swap: grab current list, replace with a fresh empty one
+        List<Location> toSave = pendingLocations;
+        pendingLocations = new CopyOnWriteArrayList<>();
+
+        if (toSave.isEmpty()) return;
+
+        try {
+            locationRepository.saveAll(toSave); // single batch INSERT
+        } catch (Exception e) {
+            System.err.println("Failed to flush locations: " + e.getMessage());
+            // Put them back so they don't get lost
+            pendingLocations.addAll(toSave);
+        }
+    }
+
+    // ─── REST: student asks "where is bus X right now?" ─────────────────────
     public BusLocationResponseDTO getCurrentLocation(Long busId) {
         CurrentLocation current = activeLocations.get(busId);
 
         if (current == null) {
-            // Not in RAM, try to load from DB
+            // Not in RAM (app restarted?) — fall back to DB
             Optional<Assignment> activeAssignment = assignmentRepository.findByBusIdAndIsActiveTrue(busId);
-
             if (activeAssignment.isPresent()) {
-                Optional<Location> lastLocation = locationRepository.findLatestByAssignmentId(activeAssignment.get().getId());
-
+                Optional<Location> lastLocation =
+                        locationRepository.findLatestByAssignmentId(activeAssignment.get().getId());
                 if (lastLocation.isPresent()) {
                     Location loc = lastLocation.get();
                     return new BusLocationResponseDTO(
-                            busId,
-                            activeAssignment.get().getBus().getBusName(),
-                            loc.getLatitude(),
-                            loc.getLongitude(),
-                            loc.getTimestamp(),
-                            true
+                            busId, activeAssignment.get().getBus().getBusName(),
+                            loc.getLatitude(), loc.getLongitude(), loc.getTimestamp(), true
                     );
                 }
             }
-
-            // No location available
             return new BusLocationResponseDTO(busId, null, null, null, null, false);
         }
 
-        // Return from RAM
         return new BusLocationResponseDTO(
-                current.busId,
-                current.busName,
-                current.latitude,
-                current.longitude,
-                current.timestamp,
-                true
+                current.busId, current.busName,
+                current.latitude, current.longitude, current.timestamp, true
         );
-
     }
 
-    // Get all buses with their current locations
+    // ─── REST: student asks "where are ALL buses?" ──────────────────────────
     public List<BusLocationResponseDTO> getAllBusLocations() {
         List<Assignment> activeAssignments = assignmentRepository.findByIsActiveTrueOrderByStartedAtDesc();
-
         return activeAssignments.stream()
-                .map(assignment -> getCurrentLocation(assignment.getBus().getId()))
-                .collect(java.util.stream.Collectors.toList());
+                .map(a -> getCurrentLocation(a.getBus().getId()))
+                .collect(Collectors.toList());
     }
 
-    // Remove location when tracking stops
+    // ─── Called when driver stops tracking ─────────────────────────────────────
     public void removeLocation(Long busId) {
         activeLocations.remove(busId);
     }
 
-    // Scheduled task: Auto-timeout stale assignments (every 5 minutes)
-    @Scheduled(fixedRate = 300000) // 5 minutes
+    // ─── Auto-timeout: if no GPS update for 10 min, stop the assignment ─────
+    @Scheduled(fixedRate = 300000) // every 5 minutes
     public void checkStaleAssignments() {
         LocalDateTime timeout = LocalDateTime.now().minus(10, ChronoUnit.MINUTES);
-
         List<Assignment> staleAssignments = assignmentRepository.findStaleAssignments(timeout);
 
         for (Assignment assignment : staleAssignments) {
-            // Check if no location update in last 10 minutes
             CurrentLocation current = activeLocations.get(assignment.getBus().getId());
 
             if (current != null && current.timestamp.isBefore(timeout)) {
-                // Mark as inactive
                 assignment.setIsActive(false);
                 assignment.setEndedAt(LocalDateTime.now());
                 assignmentRepository.save(assignment);
 
-                // Remove from RAM
                 activeLocations.remove(assignment.getBus().getId());
+                assignmentCache.remove(assignment.getId());
 
                 System.out.println("Auto-stopped stale assignment: " + assignment.getId());
             }
         }
     }
 
+    // ─── Called by DataInitializer on boot to pre-populate active assignments ─
     public void seedAssignment(Assignment assignment) {
         activeLocations.putIfAbsent(
                 assignment.getBus().getId(),
@@ -167,51 +192,21 @@ public class LocationService {
                         assignment.getBus().getId(),
                         assignment.getBus().getBusName(),
                         assignment.getId(),
-                        null,
-                        null,
-                        LocalDateTime.now()
+                        null, null, LocalDateTime.now()
                 )
         );
+        assignmentCache.putIfAbsent(assignment.getId(), assignment);
     }
 
-    // Add this method to your LocationService class
-    public LocationBroadcastDTO updateLocationAndGetBroadcast(LocationDTO locationDTO) {
-        Optional<Assignment> assignmentOpt = assignmentRepository.findById(locationDTO.getAssignmentId());
-
-        if (assignmentOpt.isEmpty() || !assignmentOpt.get().getIsActive()) {
-            return null; // Invalid or inactive assignment
+    // ─── Cleanup: delete location records older than 24 hours ───────────────
+    //     Keeps the DB table small, especially important on free tier
+    @Scheduled(fixedRate = 3600000) // every 1 hour
+    public void cleanupOldLocations() {
+        LocalDateTime cutoff = LocalDateTime.now().minus(24, ChronoUnit.HOURS);
+        try {
+            locationRepository.deleteByTimestampBefore(cutoff);
+        } catch (Exception e) {
+            System.err.println("Cleanup failed: " + e.getMessage());
         }
-
-        Assignment assignment = assignmentOpt.get();
-        Long busId = assignment.getBus().getId();
-        String busName = assignment.getBus().getBusName();
-
-        // Update in-memory (RAM) - FAST
-        activeLocations.put(busId, new CurrentLocation(
-                busId,
-                busName,
-                assignment.getId(),
-                locationDTO.getLatitude(),
-                locationDTO.getLongitude(),
-                LocalDateTime.now()
-        ));
-
-        // Save to DB (async or scheduled can be done here)
-        Location location = new Location();
-        location.setAssignment(assignment);
-        location.setLatitude(locationDTO.getLatitude());
-        location.setLongitude(locationDTO.getLongitude());
-        location.setTimestamp(LocalDateTime.now());
-        locationRepository.save(location);
-
-        // Return broadcast DTO with busId included
-        return new LocationBroadcastDTO(
-                busId,
-                assignment.getId(),
-                busName,
-                locationDTO.getLatitude(),
-                locationDTO.getLongitude(),
-                LocalDateTime.now()
-        );
     }
 }

@@ -7,6 +7,7 @@ import com.college.bustracker.service.LocationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -21,11 +22,11 @@ public class LocationController {
 
     // WebSocket endpoint - Driver sends location
     @MessageMapping("/location")
-    @SendTo("/topic/location-updates")
-    public LocationBroadcastDTO handleLocationUpdate(LocationDTO locationDTO) {
-        // Update location and get the broadcast DTO with busId
-        LocationBroadcastDTO broadcast = locationService.updateLocationAndGetBroadcast(locationDTO);
-        return broadcast; // Broadcast to all subscribers WITH busId
+    @SendTo("/topic/bus-location")
+    public LocationBroadcastDTO handleLocationUpdate(
+            @Payload LocationDTO locationDTO
+    ) {
+        return locationService.updateLocationAndGetBroadcast(locationDTO);
     }
 
     // REST endpoint - Students get current bus location

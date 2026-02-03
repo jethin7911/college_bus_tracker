@@ -48,32 +48,31 @@ async function loadBuses() {
    WebSocket Connection
 ================================ */
 function connectWebSocket() {
-    const socket = new SockJS(WS_URL);
+    // 1. Force WSS and add the ngrok bypass as a query parameter
+    let finalUrl = WS_URL.replace("http", "ws");
+    // Only add the bypass if we are currently using ngrok
+    if (window.location.hostname.includes("ngrok")) {
+        finalUrl += "?ngrok-skip-browser-warning=true";
+    }
+    var socket = new WebSocket(finalUrl);
     stompClient = Stomp.over(socket);
 
-    // Disable debug logging (optional)
     stompClient.debug = null;
 
     stompClient.connect({},
-        // On successful connection
         () => {
             isConnected = true;
             updateConnectionStatus("Real-time updates active ✓");
-            console.log("WebSocket connected successfully");
 
-            // Subscribe to location updates
+            // 3. Ensure this topic matches exactly what your Backend sends to
             stompClient.subscribe("/topic/bus-location", (message) => {
                 const locationData = JSON.parse(message.body);
                 handleLocationUpdate(locationData);
             });
         },
-        // On connection error
         (error) => {
             isConnected = false;
             updateConnectionStatus("Connection lost - Retrying...");
-            console.error("WebSocket error:", error);
-
-            // Retry connection after 5 seconds
             setTimeout(connectWebSocket, 5000);
         }
     );
