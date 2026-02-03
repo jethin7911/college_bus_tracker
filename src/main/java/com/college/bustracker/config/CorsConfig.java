@@ -21,6 +21,8 @@ public class CorsConfig {
 
         // Replace with your actual Vercel URL
         config.addAllowedOrigin("https://nitcbus.vercel.app");
+        config.addAllowedOrigin("http://localhost:8080");
+
         // If you have a custom domain too:
         // config.addAllowedOrigin("https://nitcbus.com");
 
