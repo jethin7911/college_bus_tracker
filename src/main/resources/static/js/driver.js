@@ -48,7 +48,7 @@ document.getElementById("loginBtn").addEventListener("click", async () => {
     }
 
     try {
-        const res = await fetch(`${API_BASE}/driver/login`, {
+        const res = await fetch(`${API_BASE}/api/driver/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ phoneNumber })
@@ -113,7 +113,7 @@ document.getElementById("startBtn").addEventListener("click", async () => {
     }
 
     try {
-        const res = await fetch(`${API_BASE}/driver/start-tracking`, {
+        const res = await fetch(`${API_BASE}/api/driver/start-tracking`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -169,7 +169,7 @@ document.getElementById("startBtn").addEventListener("click", async () => {
 ================================ */
 document.getElementById("stopBtn").addEventListener("click", async () => {
     try {
-        await fetch(`${API_BASE}/stop-tracking?assignmentId=${assignmentId}`, {
+        await fetch(`${API_BASE}/api/driver/stop-tracking?assignmentId=${assignmentId}`, {
             method: "POST"
         });
 
