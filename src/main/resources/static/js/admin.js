@@ -1,10 +1,11 @@
 /* ================================
    CONFIG
 ================================ */
-//const API_BASE = "https://192.168.137.1:8080/api/admin";
 
+const API_BASE = "https://collegebustracker-production.up.railway.app";
 
-const API_BASE = `${location.origin}/api/admin`;
+// Then use it like:
+fetch(`${API_BASE}/api/buses/locations`)
 
 let loggedInAdminId = null;
 

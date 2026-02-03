@@ -17,17 +17,14 @@ public class CorsConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
 
-        // 1. Allow credentials (Required if you use Cookies or Auth headers)
         config.setAllowCredentials(true);
 
-        // 2. Specify allowed origins
-        // Use addAllowedOriginPattern("*") for development to allow all while credentials are true
-        config.addAllowedOriginPattern("*");
+        // Replace with your actual Vercel URL
+        config.addAllowedOrigin("https://nitcbus.vercel.app");
+        // If you have a custom domain too:
+        // config.addAllowedOrigin("https://nitcbus.com");
 
-        // 3. Allow all headers
         config.addAllowedHeader("*");
-
-        // 4. Allow specific or all HTTP methods
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
 
         source.registerCorsConfiguration("/**", config);

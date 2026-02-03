@@ -9,11 +9,15 @@
 
 //url for ngrok
 // REST API base (http / https only)
-const API_BASE = `${location.origin}/api/driver`;
+const API_BASE = "https://collegebustracker-production.up.railway.app";
 
-// WebSocket base (ws / wss automatically)
-// SockJS endpoint MUST be http/https
-const WS_URL = `${location.origin}/ws`;
+// Then use it like:
+fetch(`${API_BASE}/api/buses/locations`)
+// WebSocket:
+//const WS_URL = new WebSocket(`wss://collegebustracker-production.up.railway.app/ws`);
+// Or if using SockJS (which you are, based on WebSocketConfig):
+const WS_URL = new WebSocket(`wss://collegebustracker-production.up.railway.app/ws/websocket`);
+
 
 
 let driverId = null;
