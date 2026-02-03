@@ -8,6 +8,7 @@ import com.college.bustracker.entity.Location;
 import com.college.bustracker.repository.AssignmentRepository;
 import com.college.bustracker.repository.LocationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,14 +30,16 @@ public class LocationService {
     @Autowired
     private AssignmentRepository assignmentRepository;
 
-    // ─── In-memory: latest location per bus (tiny, max 6 entries) ────────────
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
+
+
     private final Map<Long, CurrentLocation> activeLocations = new ConcurrentHashMap<>();
 
-    // ─── Buffer: collects Location entities between DB flushes ───────────────
-    //     CopyOnWriteArrayList is thread-safe for concurrent add + swap
+
     private volatile List<Location> pendingLocations = new CopyOnWriteArrayList<>();
 
-    // ─── Cache: assignmentId -> Assignment, avoids re-fetching from DB ───────
+
     private final Map<Long, Assignment> assignmentCache = new ConcurrentHashMap<>();
 
     // ─── Inner class ─────────────────────────────────────────────────────────
@@ -98,10 +101,13 @@ public class LocationService {
         pendingLocations.add(location);
 
         // 3. Return broadcast DTO (WebSocket pushes this to all students)
-        return new LocationBroadcastDTO(
+        LocationBroadcastDTO broadcastDto = new LocationBroadcastDTO(
                 busId, assignment.getId(), busName,
                 locationDTO.getLatitude(), locationDTO.getLongitude(), now
         );
+        messagingTemplate.convertAndSend("/topic/bus-location", broadcastDto);
+
+        return broadcastDto;
     }
 
     // ─── Flush buffer to DB every 30 seconds ─────────────────────────────────
@@ -151,7 +157,7 @@ public class LocationService {
         );
     }
 
-    // ─── REST: student asks "where are ALL buses?" ──────────────────────────
+
     public List<BusLocationResponseDTO> getAllBusLocations() {
         List<Assignment> activeAssignments = assignmentRepository.findByIsActiveTrueOrderByStartedAtDesc();
         return activeAssignments.stream()

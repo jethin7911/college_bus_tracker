@@ -22,7 +22,7 @@ public class LocationController {
 
     // WebSocket endpoint - Driver sends location
     @MessageMapping("/location")
-    @SendTo("/topic/bus-location")
+
     public LocationBroadcastDTO handleLocationUpdate(
             @Payload LocationDTO locationDTO
     ) {

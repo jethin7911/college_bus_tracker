@@ -14,7 +14,8 @@ fetch(`${API_BASE}/buses/locations`)
 // WebSocket:
 //const WS_URL = new WebSocket(`wss://collegebustracker-production.up.railway.app/ws`);
 // Or if using SockJS (which you are, based on WebSocketConfig):
-const WS_URL = new WebSocket(`wss://collegebustracker-production.up.railway.app/ws/websocket`);
+
+const WS_URL = "wss://collegebustracker-production.up.railway.app/ws";
 
 let map;
 let busMarker = null;
@@ -123,7 +124,6 @@ function onBusSelect() {
             updateConnectionStatus("Real-time updates active ✓");
             return;
         }
-
         // Fetch initial location immediately (Hybrid approach)
         await fetchInitialLocation();
     });
@@ -138,7 +138,6 @@ async function fetchInitialLocation() {
         const response = await fetch(
             `${API_BASE}/bus/${selectedBusId}/location`
         );
-
         if (!response.ok) {
             console.warn("No location available yet");
             updateConnectionStatus("Waiting for bus to start...");
