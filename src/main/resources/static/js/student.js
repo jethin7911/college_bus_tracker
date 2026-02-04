@@ -14,7 +14,7 @@ fetch(`${API_BASE}/buses/locations`)
 //const WS_URL = new WebSocket(`wss://collegebustracker-production.up.railway.app/ws`);
 // Or if using SockJS (which you are, based on WebSocketConfig):
 
-const WS_URL = "wss://collegebustracker-production.up.railway.app/ws";
+const WS_URL = "https://collegebustracker-production.up.railway.app/ws";  // ✅ CORRECT
 
 let map;
 let busMarker = null;
@@ -63,7 +63,7 @@ async function loadBuses() {
 ================================ */
 function connectWebSocket() {
     // 1. Force WSS and add the ngrok bypass as a query parameter
-    let finalUrl = WS_URL.replace("http", "ws");
+    //let finalUrl = WS_URL.replace("http", "ws");
     // Only add the bypass if we are currently using ngrok
     if (window.location.hostname.includes("ngrok")) {
         finalUrl += "?ngrok-skip-browser-warning=true";
@@ -135,10 +135,10 @@ function handleLocationUpdate(locationData) {
     console.log("Received location update:", locationData);
 
     // Double-check this is for the selected bus
-    if (!selectedBusId || locationData.busId !== parseInt(selectedBusId)) {
-        console.warn("Received update for different bus, ignoring");
-        return;
-    }
+    if (!selectedBusId) return;
+
+    if (Number(locationData.busId) !== Number(selectedBusId)) return;
+
 
     // Update marker with new location
     if (locationData.latitude != null && locationData.longitude != null) {

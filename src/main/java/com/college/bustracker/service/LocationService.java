@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -84,7 +85,7 @@ public class LocationService {
 
         Long busId = assignment.getBus().getId();
         String busName = assignment.getBus().getBusName();
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
 
         // 1. Update in-memory map (instant, students read from here)
         activeLocations.put(busId, new CurrentLocation(
@@ -149,23 +150,35 @@ public class LocationService {
                 Optional<Location> lastLocation =
                         locationRepository.findLatestByAssignmentId(activeAssignment.get().getId());
                 if (lastLocation.isPresent()) {
+
                     Location loc = lastLocation.get();
+
                     return new BusLocationResponseDTO(
-                            busId, activeAssignment.get().getBus().getBusName(),
-                            loc.getLatitude(), loc.getLongitude(), loc.getTimestamp(), true
+                            busId,
+                            activeAssignment.get().getBus().getBusName(),
+                            loc.getLatitude(),
+                            loc.getLongitude(),
+                            loc.getTimestamp(),
+                            loc.getLatitude() != null && loc.getLongitude() != null
                     );
                 }
             }
             return new BusLocationResponseDTO(busId, null, null, null, null, false);
         }
 
+        boolean hasLocation =
+                current.latitude != null &&
+                        current.longitude != null;
+
         return new BusLocationResponseDTO(
-                current.busId, current.busName,
-                current.latitude, current.longitude, current.timestamp, true
+                current.busId,
+                current.busName,
+                current.latitude,
+                current.longitude,
+                current.timestamp,
+                hasLocation
         );
     }
-
-
     public List<BusLocationResponseDTO> getAllBusLocations() {
         List<Assignment> activeAssignments = assignmentRepository.findByIsActiveTrueOrderByStartedAtDesc();
         return activeAssignments.stream()
@@ -181,7 +194,7 @@ public class LocationService {
     // ─── Auto-timeout: if no GPS update for 10 min, stop the assignment ─────
     @Scheduled(fixedRate = 300000) // every 5 minutes
     public void checkStaleAssignments() {
-        LocalDateTime timeout = LocalDateTime.now().minus(10, ChronoUnit.MINUTES);
+        LocalDateTime timeout = LocalDateTime.now(ZoneOffset.UTC).minus(10, ChronoUnit.MINUTES);
         List<Assignment> staleAssignments = assignmentRepository.findStaleAssignments(timeout);
 
         for (Assignment assignment : staleAssignments) {
@@ -189,12 +202,10 @@ public class LocationService {
 
             if (current != null && current.timestamp.isBefore(timeout)) {
                 assignment.setIsActive(false);
-                assignment.setEndedAt(LocalDateTime.now());
+                assignment.setEndedAt(LocalDateTime.now(ZoneOffset.UTC));
                 assignmentRepository.save(assignment);
-
                 activeLocations.remove(assignment.getBus().getId());
                 assignmentCache.remove(assignment.getId());
-
                 System.out.println("Auto-stopped stale assignment: " + assignment.getId());
             }
         }
@@ -208,7 +219,7 @@ public class LocationService {
                         assignment.getBus().getId(),
                         assignment.getBus().getBusName(),
                         assignment.getId(),
-                        null, null, LocalDateTime.now()
+                        null, null, LocalDateTime.now(ZoneOffset.UTC)
                 )
         );
         assignmentCache.putIfAbsent(assignment.getId(), assignment);
@@ -218,7 +229,7 @@ public class LocationService {
     //     Keeps the DB table small, especially important on free tier
     @Scheduled(fixedRate = 3600000) // every 1 hour
     public void cleanupOldLocations() {
-        LocalDateTime cutoff = LocalDateTime.now().minus(24, ChronoUnit.HOURS);
+        LocalDateTime cutoff = LocalDateTime.now(ZoneOffset.UTC).minus(24, ChronoUnit.HOURS);
         try {
             locationRepository.deleteByTimestampBefore(cutoff);
         } catch (Exception e) {
