@@ -42,7 +42,7 @@ public class LocationService {
 
     private final Map<Long, Assignment> assignmentCache = new ConcurrentHashMap<>();
 
-    // ─── Inner class ─────────────────────────────────────────────────────────
+
     private static class CurrentLocation {
         Long busId;
         String busName;
@@ -100,12 +100,19 @@ public class LocationService {
         location.setTimestamp(now);
         pendingLocations.add(location);
 
-        // 3. Return broadcast DTO (WebSocket pushes this to all students)
+        // 3. Return broadcast DTO (WebSocket pushes this to subscribed students)
         LocationBroadcastDTO broadcastDto = new LocationBroadcastDTO(
                 busId, assignment.getId(), busName,
                 locationDTO.getLatitude(), locationDTO.getLongitude(), now
         );
+
+        // Broadcast to bus-specific topic (e.g., /topic/bus/123)
+        messagingTemplate.convertAndSend("/topic/bus/" + busId, broadcastDto);
+
+        // Also broadcast to general topic for backwards compatibility
         messagingTemplate.convertAndSend("/topic/bus-location", broadcastDto);
+
+        System.out.println("Location broadcasted for bus " + busId + " to /topic/bus/" + busId);
 
         return broadcastDto;
     }
@@ -123,6 +130,7 @@ public class LocationService {
 
         try {
             locationRepository.saveAll(toSave); // single batch INSERT
+            System.out.println("Flushed " + toSave.size() + " locations to database");
         } catch (Exception e) {
             System.err.println("Failed to flush locations: " + e.getMessage());
             // Put them back so they don't get lost

@@ -1,4 +1,3 @@
-
 /* ================================
    DYNAMIC API CONFIGURATION
 ================================ */
@@ -22,6 +21,8 @@ let busMarker = null;
 let selectedBusId = null;
 let stompClient = null;
 let isConnected = false;
+let currentSubscription = null;  // Track current bus subscription
+
 /* ================================
    Initialize Map
 ================================ */
@@ -31,6 +32,7 @@ function initMap() {
         attribution: "© OpenStreetMap contributors"
     }).addTo(map);
 }
+
 /* ================================
    Load Buses for Dropdown
 ================================ */
@@ -48,11 +50,14 @@ async function loadBuses() {
             option.textContent = bus.busName;
             busSelect.appendChild(option);
         });
+
+        console.log(`Loaded ${buses.length} buses`);
     } catch (error) {
         console.error("Failed to load buses:", error);
         alert("Unable to load buses. Please try again later.");
     }
 }
+
 /* ================================
    WebSocket Connection
 ================================ */
@@ -63,28 +68,63 @@ function connectWebSocket() {
     if (window.location.hostname.includes("ngrok")) {
         finalUrl += "?ngrok-skip-browser-warning=true";
     }
-    var socket = new WebSocket(finalUrl);
+
+    console.log("Connecting to WebSocket:", finalUrl);
+
+    var socket = new SockJS(WS_URL);
     stompClient = Stomp.over(socket);
 
-    stompClient.debug = null;
+    stompClient.debug = function(str) {
+        console.log('STOMP:', str);
+    };
 
     stompClient.connect({},
         () => {
             isConnected = true;
-            updateConnectionStatus("Real-time updates active ✓");
+            console.log("WebSocket connected successfully");
+            updateConnectionStatus("Connected - Select a bus to track");
 
-            // 3. Ensure this topic matches exactly what your Backend sends to
-            stompClient.subscribe("/topic/bus-location", (message) => {
-                const locationData = JSON.parse(message.body);
-                handleLocationUpdate(locationData);
-            });
+            // If a bus was already selected, subscribe to it
+            if (selectedBusId) {
+                subscribeToBus(selectedBusId);
+            }
         },
         (error) => {
             isConnected = false;
+            console.error("WebSocket connection error:", error);
             updateConnectionStatus("Connection lost - Retrying...");
             setTimeout(connectWebSocket, 5000);
         }
     );
+}
+
+/* ================================
+   Subscribe to Bus-Specific Topic
+================================ */
+function subscribeToBus(busId) {
+    if (!stompClient || !isConnected) {
+        console.warn("WebSocket not connected, cannot subscribe to bus");
+        return;
+    }
+
+    // Unsubscribe from previous bus if any
+    if (currentSubscription) {
+        console.log("Unsubscribing from previous bus");
+        currentSubscription.unsubscribe();
+        currentSubscription = null;
+    }
+
+    // Subscribe to the bus-specific topic
+    const topic = `/topic/bus/${busId}`;
+    console.log(`Subscribing to ${topic}`);
+
+    currentSubscription = stompClient.subscribe(topic, (message) => {
+        console.log("Received message from", topic, ":", message.body);
+        const locationData = JSON.parse(message.body);
+        handleLocationUpdate(locationData);
+    });
+
+    updateConnectionStatus(`Tracking bus - Waiting for updates...`);
 }
 
 /* ================================
@@ -94,15 +134,22 @@ function handleLocationUpdate(locationData) {
     // locationData now has: busId, assignmentId, busName, latitude, longitude, timestamp
     console.log("Received location update:", locationData);
 
-    // Only update if this is for the selected bus
+    // Double-check this is for the selected bus
     if (!selectedBusId || locationData.busId !== parseInt(selectedBusId)) {
+        console.warn("Received update for different bus, ignoring");
         return;
     }
 
     // Update marker with new location
     if (locationData.latitude != null && locationData.longitude != null) {
         updateBusMarker(locationData.latitude, locationData.longitude);
-        updateConnectionStatus(`Real-time updates active ✓ | Last update: ${new Date().toLocaleTimeString()}`);
+
+        const updateTime = new Date().toLocaleTimeString();
+        updateConnectionStatus(`✓ Real-time tracking | Last update: ${updateTime}`);
+
+        console.log(`Updated bus ${locationData.busId} position: [${locationData.latitude}, ${locationData.longitude}]`);
+    } else {
+        console.warn("Received location update with null coordinates");
     }
 }
 
@@ -113,21 +160,38 @@ function onBusSelect() {
     const busSelect = document.getElementById("busSelect");
 
     busSelect.addEventListener("change", async () => {
-        selectedBusId = busSelect.value;
+        const newBusId = busSelect.value;
 
-        if (!selectedBusId) {
+        console.log("Bus selection changed to:", newBusId);
+
+        if (!newBusId) {
             // Clear marker if no bus selected
             if (busMarker) {
                 map.removeLayer(busMarker);
                 busMarker = null;
             }
-            updateConnectionStatus("Real-time updates active ✓");
+
+            // Unsubscribe from current bus
+            if (currentSubscription) {
+                currentSubscription.unsubscribe();
+                currentSubscription = null;
+            }
+
+            selectedBusId = null;
+            updateConnectionStatus("Connected - Select a bus to track");
             return;
         }
+
+        selectedBusId = newBusId;
+
+        // Subscribe to the new bus's WebSocket topic
+        subscribeToBus(selectedBusId);
+
         // Fetch initial location immediately (Hybrid approach)
         await fetchInitialLocation();
     });
 }
+
 /* ================================
    Fetch Initial Bus Location (HTTP)
 ================================ */
@@ -135,30 +199,36 @@ async function fetchInitialLocation() {
     if (!selectedBusId) return;
 
     try {
+        console.log(`Fetching initial location for bus ${selectedBusId}`);
+
         const response = await fetch(
             `${API_BASE}/bus/${selectedBusId}/location`
         );
+
         if (!response.ok) {
-            console.warn("No location available yet");
-            updateConnectionStatus("Waiting for bus to start...");
+            console.warn("No location available yet for bus", selectedBusId);
+            updateConnectionStatus("Waiting for bus to start tracking...");
             return;
         }
 
         const data = await response.json();
+        console.log("Initial location data:", data);
 
         // Backend explicitly tells whether location is active
         if (!data.active || data.latitude == null || data.longitude == null) {
             console.log("Bus is active but location not received yet");
-            updateConnectionStatus("Waiting for location data...");
+            updateConnectionStatus("Bus is active - Waiting for first location update...");
             return;
         }
 
         updateBusMarker(data.latitude, data.longitude);
-        updateConnectionStatus("Real-time updates active ✓");
+
+        const timestamp = data.timestamp ? new Date(data.timestamp).toLocaleTimeString() : 'now';
+        updateConnectionStatus(`✓ Real-time tracking | Last update: ${timestamp}`);
 
     } catch (error) {
         console.error("Error fetching initial location:", error);
-        updateConnectionStatus("Error loading location");
+        updateConnectionStatus("Error loading location - Check console");
     }
 }
 
@@ -183,13 +253,14 @@ function updateBusMarker(lat, lng) {
             .openPopup();
 
         map.setView(position, 16);
+        console.log("Created new marker at:", position);
     } else {
         // Move existing marker smoothly
         busMarker.setLatLng(position);
+        console.log("Updated marker position to:", position);
     }
-
-    console.log(`Bus marker updated: [${lat}, ${lng}]`);
 }
+
 /* ================================
    Update Connection Status
 ================================ */
@@ -198,13 +269,18 @@ function updateConnectionStatus(message) {
     if (statusElement) {
         statusElement.textContent = message;
     }
+    console.log("Status:", message);
 }
+
 /* ================================
    Init on Page Load
 ================================ */
 document.addEventListener("DOMContentLoaded", () => {
+    console.log("Initializing College Bus Tracker...");
     initMap();
     loadBuses();
     onBusSelect();
     connectWebSocket(); // Start WebSocket connection
+
+    console.log("Initialization complete");
 });

@@ -22,7 +22,6 @@ public class LocationController {
 
     // WebSocket endpoint - Driver sends location
     @MessageMapping("/location")
-
     public LocationBroadcastDTO handleLocationUpdate(
             @Payload LocationDTO locationDTO
     ) {
