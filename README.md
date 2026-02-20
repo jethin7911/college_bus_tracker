@@ -31,6 +31,18 @@ Replace or update this list with what your project actually uses:
 
 Live demo: https://collegebustracker-production.up.railway.app/
 
+## Video demo of project
+
+
+https://github.com/user-attachments/assets/5e8fb1e7-cc6a-4176-a06e-f992c3957a9e
+
+
+
+https://github.com/user-attachments/assets/b7df470b-77f9-4e39-840d-1b00d8a59cf1
+
+
+
+
 ## Environment / Configuration variables
 Provide a full list of env vars required by the repo and what they mean:
 - DATABASE_URL — 
