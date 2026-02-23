@@ -49,7 +49,7 @@ public class BusService {
         bus.setBusName(busDTO.getBusName());
 
         Bus saved = busRepository.save(bus);
-        System.out.println("✅ Bus saved with ID: " + saved.getId()); // Debug log
+        System.out.println("Bus saved with ID: " + saved.getId()); // Debug log
         return new ApiResponseDTO(true, "Bus added successfully", saved.getId());
     }
 
@@ -65,7 +65,7 @@ public class BusService {
         }
 
         busRepository.deleteById(busId);
-        System.out.println("✅ Bus deleted with ID: " + busId); // Debug log
+        System.out.println("Bus deleted with ID: " + busId); // Debug log
         return new ApiResponseDTO(true, "Bus deleted successfully");
     }
 }

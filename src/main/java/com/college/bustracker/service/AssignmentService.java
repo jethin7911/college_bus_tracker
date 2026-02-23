@@ -32,7 +32,7 @@ public class AssignmentService {
     @Autowired
     private LocationService locationService;
 
-    // ✅ FIX: Start tracking with force-stop capability
+    // FIX: Start tracking with force-stop capability
     public ApiResponseDTO startTracking(BusSelectionDTO request) {
 
         // Check if driver exists
@@ -47,20 +47,20 @@ public class AssignmentService {
             return new ApiResponseDTO(false, "Bus not found");
         }
 
-        // ✅ FIX: Check if driver already has active assignment
+        // FIX: Check if driver already has active assignment
         Optional<Assignment> driverActive = assignmentRepository.findByDriverIdAndIsActiveTrue(request.getDriverId());
         if (driverActive.isPresent()) {
-            // ✅ FIX: If forceStart is enabled, auto-stop the previous assignment
+            // FIX: If forceStart is enabled, auto-stop the previous assignment
             if (request.getForceStart() != null && request.getForceStart()) {
                 Assignment previousAssignment = driverActive.get();
                 previousAssignment.setIsActive(false);
                 previousAssignment.setEndedAt(LocalDateTime.now());
                 assignmentRepository.save(previousAssignment);
 
-                // ✅ FIX: Clear location from RAM
+                // FIX: Clear location from RAM
                 locationService.removeLocation(previousAssignment.getBus().getId());
 
-                System.out.println("✅ Force-stopped previous assignment: " + previousAssignment.getId());
+                System.out.println("Force-stopped previous assignment: " + previousAssignment.getId());
             } else {
                 return new ApiResponseDTO(false, "You are already tracking another bus. Stop it first.");
             }
@@ -80,14 +80,14 @@ public class AssignmentService {
         assignment.setIsActive(true);
 
         Assignment saved = assignmentRepository.save(assignment);
-        System.out.println("✅ Assignment saved with ID: " + saved.getId()); // Debug log
+        System.out.println("Assignment saved with ID: " + saved.getId()); // Debug log
 
         locationService.seedAssignment(saved);
 
         return new ApiResponseDTO(true, "Tracking started", saved.getId());
     }
 
-    // ✅ FIX: Stop tracking with location cleanup
+    // FIX: Stop tracking with location cleanup
     public ApiResponseDTO stopTracking(Long assignmentId) {
         Optional<Assignment> assignmentOpt = assignmentRepository.findById(assignmentId);
 
@@ -97,14 +97,14 @@ public class AssignmentService {
 
         Assignment assignment = assignmentOpt.get();
 
-        // ✅ FIX: Clear location from RAM BEFORE updating database
+        //  FIX: Clear location from RAM BEFORE updating database
         locationService.removeLocation(assignment.getBus().getId());
 
         assignment.setIsActive(false);
         assignment.setEndedAt(LocalDateTime.now());
 
         assignmentRepository.save(assignment);
-        System.out.println("✅ Assignment stopped with ID: " + assignmentId); // Debug log
+        System.out.println("Assignment stopped with ID: " + assignmentId); // Debug log
 
         return new ApiResponseDTO(true, "Tracking stopped");
     }

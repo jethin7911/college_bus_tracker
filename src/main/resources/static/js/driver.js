@@ -44,7 +44,7 @@ document.getElementById("loginBtn").addEventListener("click", async () => {
     }
 
     try {
-        const res = await fetch(`${API_BASE}/api/driver/login`, {
+        const res = await fetch(`${API_BASE}/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ phoneNumber })
@@ -84,7 +84,7 @@ document.getElementById("loginBtn").addEventListener("click", async () => {
 ================================ */
 async function loadAvailableBuses() {
 
-    const res = await fetch(`${API_BASE}/api/buses`);
+    const res = await fetch(`${API_BASE}/buses/available`);
     const buses = await res.json();
 
     busSelect.innerHTML = `<option value="">Select Bus</option>`;
@@ -109,7 +109,7 @@ document.getElementById("startBtn").addEventListener("click", async () => {
     }
 
     try {
-        const res = await fetch(`${API_BASE}/api/driver/start-tracking`, {
+        const res = await fetch(`${API_BASE}/start-tracking`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -165,7 +165,7 @@ document.getElementById("startBtn").addEventListener("click", async () => {
 ================================ */
 document.getElementById("stopBtn").addEventListener("click", async () => {
     try {
-        await fetch(`${API_BASE}/api/driver/stop-tracking?assignmentId=${assignmentId}`, {
+        await fetch(`${API_BASE}/stop-tracking?assignmentId=${assignmentId}`, {
             method: "POST"
         });
 
