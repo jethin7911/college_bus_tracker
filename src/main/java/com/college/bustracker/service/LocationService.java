@@ -190,7 +190,6 @@ public class LocationService {
     public void removeLocation(Long busId) {
         activeLocations.remove(busId);
     }
-
     // ─── Auto-timeout: if no GPS update for 10 min, stop the assignment ─────
     @Scheduled(fixedRate = 300000) // every 5 minutes
     public void checkStaleAssignments() {
@@ -210,7 +209,6 @@ public class LocationService {
             }
         }
     }
-
     // ─── Called by DataInitializer on boot to pre-populate active assignments ─
     public void seedAssignment(Assignment assignment) {
         activeLocations.putIfAbsent(
@@ -224,7 +222,6 @@ public class LocationService {
         );
         assignmentCache.putIfAbsent(assignment.getId(), assignment);
     }
-
     // ─── Cleanup: delete location records older than 24 hours ───────────────
     //     Keeps the DB table small, especially important on free tier
     @Scheduled(fixedRate = 3600000) // every 1 hour

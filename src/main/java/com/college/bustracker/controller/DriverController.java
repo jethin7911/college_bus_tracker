@@ -19,12 +19,6 @@ import java.util.List;
 public class DriverController {
 
     @Autowired
-    private SimpMessagingTemplate messagingTemplate;
-
-    @Autowired
-    private LocationService locationService;
-
-    @Autowired
     private DriverService driverService;
 
     @Autowired

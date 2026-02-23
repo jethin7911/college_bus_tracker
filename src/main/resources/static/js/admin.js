@@ -2,14 +2,7 @@
    CONFIG
 ================================ */
 
-const API_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
-    ? "https://fluently-unhectored-cedric.ngrok-free.dev" // Use for local development/testing
-    : "https://collegebustracker-production.up.railway.app"; // Use for production (Vercel)
-
-
-// Then use it like:
-fetch(`${API_BASE}/buses/locations`)
-
+const API_BASE = "fluently-unhectored-cedric.ngrok-free.dev/api/admin"
 let loggedInAdminId = null;
 
 /* ================================
