@@ -2,7 +2,8 @@
    CONFIG
 ================================ */
 
-const API_BASE = "fluently-unhectored-cedric.ngrok-free.dev/api/admin"
+//const API_BASE = "fluently-unhectored-cedric.ngrok-free.dev/api/admin"
+const API_BASE = `${location.origin}/api`;
 let loggedInAdminId = null;
 
 /* ================================
@@ -30,7 +31,7 @@ loginBtn.addEventListener("click", async () => {
     }
 
     try {
-        const res = await fetch(`${API_BASE}/api/admin/login`, {
+        const res = await fetch(`${API_BASE}/admin/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username, password })
@@ -76,7 +77,7 @@ document.getElementById("addBusBtn").addEventListener("click", async () => {
     // Backend expects: busName (not busNumber and routeName separately)
     const busName = routeName ? `${busNumber} - ${routeName}` : busNumber;
 
-    await fetch(`${API_BASE}/api/admin/buses`, {
+    await fetch(`${API_BASE}/admin/buses`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ busName })  // FIXED: Changed from busNumber, routeName
@@ -102,7 +103,7 @@ document.getElementById("addDriverBtn").addEventListener("click", async () => {
         return;
     }
 
-    await fetch(`${API_BASE}/api/admin/drivers`, {
+    await fetch(`${API_BASE}/admin/drivers`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, phoneNumber })
@@ -120,7 +121,7 @@ document.getElementById("addDriverBtn").addEventListener("click", async () => {
    LOAD BUSES
 ================================ */
 async function loadBuses() {
-    const res = await fetch(`${API_BASE}/api/admin/buses`);
+    const res = await fetch(`${API_BASE}/admin/buses`);
     const buses = await res.json();
 
     const busSelect = document.getElementById("busSelect");
@@ -138,7 +139,7 @@ async function loadBuses() {
    LOAD DRIVERS
 ================================ */
 async function loadDrivers() {
-    const res = await fetch(`${API_BASE}/api/admin/drivers`);
+    const res = await fetch(`${API_BASE}/admin/drivers`);
     const drivers = await res.json();
 
     const driverSelect = document.getElementById("driverSelect");

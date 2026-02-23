@@ -10,8 +10,6 @@ const API_BASE = `${location.origin}/api`;
 // WebSocket base (ws / wss automatically)
 const WS_URL = `${location.origin}/ws`;
 
-
-
 let map;
 let busMarker = null;
 let selectedBusId = null;

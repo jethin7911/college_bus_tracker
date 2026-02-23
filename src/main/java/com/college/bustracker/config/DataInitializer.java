@@ -31,7 +31,7 @@ public class DataInitializer implements CommandLineRunner {
             superAdmin.setCreatedBy(null);
 
             adminRepository.save(superAdmin);
-            System.out.println("✅ Super admin created: nitcadmin / nitc@123");
+           // System.out.println("Super admin created: nitcadmin / nitc@123");
         }
 
         if (busRepository.count() == 0) {
