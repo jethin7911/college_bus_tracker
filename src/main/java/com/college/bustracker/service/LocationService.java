@@ -182,7 +182,6 @@ public class LocationService {
                 .map(a -> getCurrentLocation(a.getBus().getId()))
                 .collect(Collectors.toList());
     }
-
     // Called when driver stops tracking
     public void removeLocation(Long busId) {
         activeLocations.remove(busId);

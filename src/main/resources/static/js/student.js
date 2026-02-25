@@ -15,7 +15,7 @@ let busMarker = null;
 let selectedBusId = null;
 let stompClient = null;
 let isConnected = false;
-
+let busSubscription = null;
 /* ================================
    Initialize Map
 ================================ */
@@ -49,6 +49,25 @@ async function loadBuses() {
     }
 }
 
+function subscribeToSelectedBus(busId) {
+    if (!stompClient || !isConnected) return;
+
+    // Unsubscribe from previous bus
+    if (busSubscription) {
+        busSubscription.unsubscribe();
+        busSubscription = null;
+    }
+
+    console.log("Subscribing to bus topic:", `/topic/bus/${busId}`);
+
+    busSubscription = stompClient.subscribe(
+        `/topic/bus/${busId}`,
+        (message) => {
+            const locationData = JSON.parse(message.body);
+            handleLocationUpdate(locationData);
+        }
+    );
+}
 /* ================================
    WebSocket Connection
 ================================ */
@@ -67,10 +86,10 @@ function connectWebSocket() {
             console.log("WebSocket connected successfully");
 
             // Subscribe to location updates
-            stompClient.subscribe("/topic/location-updates", (message) => {
+            /*stompClient.subscribe("/topic/location-updates", (message) => {
                 const locationData = JSON.parse(message.body);
                 handleLocationUpdate(locationData);
-            });
+            }); */
         },
         // On connection error
         (error) => {
@@ -106,26 +125,24 @@ function handleLocationUpdate(locationData) {
 /* ================================
    Handle Bus Selection
 ================================ */
-function onBusSelect() {
-    const busSelect = document.getElementById("busSelect");
+busSelect.addEventListener("change", async () => {
+    selectedBusId = busSelect.value;
 
-    busSelect.addEventListener("change", async () => {
-        selectedBusId = busSelect.value;
-
-        if (!selectedBusId) {
-            // Clear marker if no bus selected
-            if (busMarker) {
-                map.removeLayer(busMarker);
-                busMarker = null;
-            }
-            updateConnectionStatus("Real-time updates active ✓");
-            return;
+    if (!selectedBusId) {
+        if (busMarker) {
+            map.removeLayer(busMarker);
+            busMarker = null;
         }
+        updateConnectionStatus("Real-time updates active ✓");
+        return;
+    }
 
-        // Fetch initial location immediately (Hybrid approach)
-        await fetchInitialLocation();
-    });
-}
+    //  SUBSCRIBE TO THE CORRECT BUS CHANNEL
+    subscribeToSelectedBus(selectedBusId);
+
+    // Fetch initial location via HTTP
+    await fetchInitialLocation();
+});
 
 /* ================================
    Fetch Initial Bus Location (HTTP)
