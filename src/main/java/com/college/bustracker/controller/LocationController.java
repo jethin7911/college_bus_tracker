@@ -21,7 +21,7 @@ public class LocationController {
 
     // WebSocket endpoint - Driver sends location
     @MessageMapping("/location")
-    @SendTo("/topic/location-updates")
+    //@SendTo("/topic/location-updates")
     public LocationBroadcastDTO handleLocationUpdate(LocationDTO locationDTO) {
         // Update location and get the broadcast DTO with busId
         LocationBroadcastDTO broadcast = locationService.updateLocationAndGetBroadcast(locationDTO);
