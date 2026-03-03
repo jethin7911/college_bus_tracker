@@ -13,8 +13,8 @@ body {
     color: #fff;
     padding: 14px 20px;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    position:relative;
 }
 
 main {
@@ -70,4 +70,22 @@ button:hover {
     font-size: 13px;
     color: #777;
     margin-top: 10px;
+}
+.top-bar .title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+    font-size: 22px;
+    font-weight: 600;
+}
+.logout-btn {
+    width: auto;
+    padding: 6px 14px;
+    font-size: 14px;
+    background: #2563eb;
+    border-radius: 5px;
+}
+.logout-btn:hover {
+    background: #1d4ed8;
 }
