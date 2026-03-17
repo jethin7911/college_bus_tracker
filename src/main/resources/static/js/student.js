@@ -70,15 +70,24 @@ function connectWebSocket() {
 ================================ */
 function handleLocationUpdate(data) {
     if (!selectedBusId || data.busId !== Number(selectedBusId)) return;
-    updateBusMarker(data.latitude, data.longitude);
-    updateFooterTime(data.timestamp);
+    const isInactive = data.latitude == null || data.longitude == null;
+
+    if (isInactive) {
+        setFooterInactive();
+        if (busMarker) busMarker.setOpacity(0.3);
+    } else {
+        updateBusMarker(data.latitude, data.longitude);
+        updateFooterTime(data.timestamp);
+        if (busMarker) busMarker.setOpacity(1);
+
+    }
 }
 function createBusIcon(rotation = 0) {
     return L.divIcon({
         className: "bus-icon-wrapper",
         html: `
           <img 
-            src="images/BusIcon.png"
+            src="/Images/BusIcon.png"
             class="bus-icon"
             style="transform: rotate(${rotation}deg);"
           />
@@ -122,21 +131,37 @@ async function fetchInitialLocation() {
     const res = await fetch(`${API_BASE}/bus/${selectedBusId}/location`);
     if (!res.ok) return;
     const data = await res.json();
-    if (data.latitude && data.longitude) {
+
+    const isInactive = data.latitude == null || data.longitude == null;
+
+    if (isInactive) {
+        setFooterInactive();
+    } else {
         updateBusMarker(data.latitude, data.longitude);
         updateFooterTime(data.timestamp);
     }
 }
-
 function updateFooterTime(timestamp) {
+    const statusBar = document.getElementById("statusBar");
     const footerEl = document.getElementById("lastUpdate");
-    if (!footerEl) return;
+    if (!statusBar || !footerEl) return;
 
-    const time = timestamp
-        ? new Date(timestamp)
-        : new Date();
+    statusBar.classList.remove("inactive");
+    statusBar.classList.add("active");
 
+    const time = timestamp ? new Date(timestamp) : new Date();
     footerEl.textContent = time.toLocaleTimeString();
+}
+
+function setFooterInactive() {
+    const statusBar = document.getElementById("statusBar");
+    const footerEl = document.getElementById("lastUpdate");
+    if (!statusBar || !footerEl) return;
+
+
+    statusBar.classList.add("inactive");
+    statusBar.classList.remove("active");
+    footerEl.textContent = "🛑 Bus is not running currently";
 }
 function calculateBearing(lat1, lng1, lat2, lng2) {
     const toRad = deg => deg * Math.PI / 180;
@@ -173,11 +198,16 @@ document.addEventListener("DOMContentLoaded", () => {
     document.addEventListener("click", () => {
         dropdown.style.display = "none";
     });
-    // EVENT LISTENER MUST BE HERE
+
     busSelect.addEventListener("change", async () => {
         selectedBusId = busSelect.value;
 
         if (!selectedBusId) return;
+        if (busMarker) {
+            busMarker.remove();
+            busMarker = null;
+        }
+        previousPosition = null;
 
         subscribeToSelectedBus(selectedBusId);
         await fetchInitialLocation();

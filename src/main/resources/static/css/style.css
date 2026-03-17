@@ -126,8 +126,22 @@ body {
         padding-bottom: env(safe-area-inset-bottom);
         z-index: 1000;
     }
+.footer.inactive {
+    background-color: #5c3200;
+    color: #ffd580;
+    font-weight: 600;
+}
 
-
+#statusBar.active {
+    background-color: #1a1a2e; /* match your current color */
+    color: #ffffff;
+}
+#statusBar.inactive {
+    background-color: #5c3200;
+    color: #ffd580;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
 
 /* Top bar – modern gradient & rounded */
 .top-bar {
