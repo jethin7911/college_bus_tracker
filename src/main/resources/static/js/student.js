@@ -78,7 +78,7 @@ function createBusIcon(rotation = 0) {
         className: "bus-icon-wrapper",
         html: `
           <img 
-            src="images/BusIcon.png"
+            src="/Images/BusIcon.png"
             class="bus-icon"
             style="transform: rotate(${rotation}deg);"
           />
